@@ -1,20 +1,35 @@
+import pickle
+
 from flask import *
-from main import *
 
 application = Flask(__name__)
+
+global news
 
 
 @application.route('/', methods=['GET', 'POST'])
 def basic():
-    return "<h1>Welcome! This is homepage</h1>"
+    if request.method == 'POST':
+        global news
+        news = request.form.get("upload")
+        return redirect(url_for('uploads'))
+    return render_template('index.html')
 
 
 @application.route('/uploads', methods=['GET', 'POST'])
 def uploads():
-    if request.method == 'POST':
-        return redirect(url_for('basic'))
-    if True:
-        print("TODO")
+    data = detecting_fake_news(news)
+    return render_template('result.html', data=data)
+
+
+def detecting_fake_news(var):
+    load_model = pickle.load(open('finalized_model.sav', 'rb'))
+    prediction = load_model.predict([var])
+    prob = load_model.predict_proba([var])
+
+    return [prediction[0], prob[0][1]]
+    # return (print("The given statement is ", prediction[0]),
+    #         print("The truth probability score is ", prob[0][1]))
 
 
 if __name__ == '__main__':
